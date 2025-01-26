@@ -10,7 +10,7 @@ export async function GET() {
     console.log("logs -- ", logs);
     return NextResponse.json(logs);
   } catch (error) {
-    return NextResponse.json({ error: 'Logs retrieval failed' }, { status: 400 });
+    return NextResponse.json({ error }, { status: 400 });
   }
 }
 
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const log = await Log.create(body);
     return NextResponse.json(log, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Log creation failed' }, { status: 400 });
+    return NextResponse.json({ error }, { status: 400 });
   }
 }
 
@@ -35,7 +35,7 @@ export async function DELETE(req: NextRequest) {
     await Log.findByIdAndDelete(id);
     return NextResponse.json({ message: 'Log deleted successfully' });
   } catch (error) {
-    return NextResponse.json({ error: 'Log deletion failed' }, { status: 400 });
+    return NextResponse.json({ error }, { status: 400 });
   }
 }
 
@@ -51,6 +51,6 @@ export async function PUT(req: NextRequest) {
     );
     return NextResponse.json(updatedLog);
   } catch (error) {
-    return NextResponse.json({ error: 'Log update failed' }, { status: 400 });
+    return NextResponse.json({ error }, { status: 400 });
   }
 }

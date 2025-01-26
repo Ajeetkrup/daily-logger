@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Mic, Send, Edit, Trash2, Check, X } from "lucide-react";
+import { Mic, Edit, Trash2, Check, X } from "lucide-react";
+
+type SpeechRecognition = typeof window.webkitSpeechRecognition;
+
+type Log = {
+  _id: string;
+  content: string;
+  date: string;
+  timestamp: number;
+};
 
 export default function DailyLogPage() {
   const [inputText, setInputText] = useState("");
@@ -9,12 +18,12 @@ export default function DailyLogPage() {
   const [isListening, setIsListening] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [editingLog, setEditingLog] = useState<{
     id: string;
     content: string;
   } | null>(null);
-  const recognition = useRef(null);
+  const recognition = useRef<SpeechRecognition | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -22,36 +31,33 @@ export default function DailyLogPage() {
 
   useEffect(() => {
     if ("webkitSpeechRecognition" in window) {
-      recognition.current = new (window as any).webkitSpeechRecognition();
-      recognition.current.continuous = true;
-      recognition.current.interimResults = true;
-      recognition.current.lang = "en-US"; // Set the language to English (US)
+      recognition.current = new (window as unknown as { webkitSpeechRecognition: SpeechRecognition }).webkitSpeechRecognition();
+      if (recognition.current) {
+        recognition.current.continuous = true;
+        recognition.current.interimResults = true;
+        recognition.current.lang = "en-US"; // Set the language to English (US)
 
-      recognition.current.onresult = (event: any) => {
-        let interimTranscript = "";
+      recognition.current.onresult = (event: { resultIndex: number; results: SpeechRecognitionResultList }) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             setInputText((prev) => prev + transcript);
-          } else {
-            interimTranscript += transcript;
-          }
+          } 
         }
       };
-
       recognition.current.onstart = () => {
         setInputText("");
         setIsListening(true);
       };
 
-      recognition.current.onerror = (event: any) => {
+      recognition.current.onerror = (event: { error: string }) => {
         console.error(event.error);
         setIsListening(false);
       };
-
       recognition.current.onend = () => {
         setIsListening(false);
       };
+    }
     } else {
       console.error(
         "webkitSpeechRecognition is not supported in this browser."
@@ -86,6 +92,7 @@ export default function DailyLogPage() {
   const submitLog = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+    setIsSending(true);
     try {
       const response = await fetch("/api/logs", {
         method: "POST",
@@ -104,6 +111,8 @@ export default function DailyLogPage() {
     } catch (error) {
       console.error("Error adding log:", error);
       setErrorMessage(error.message);
+    }finally {
+      setIsSending(false);
     }
   };
 
@@ -127,7 +136,7 @@ export default function DailyLogPage() {
     }
   };
 
-  const startEditLog = (log: any) => {
+  const startEditLog = (log: { _id: string; content: string; date: string; timestamp?: number; }) => {
     setErrorMessage("");
     const formattedDate = new Date(log.date).toISOString().split("T")[0];
     setEditingLog({ id: log._id, content: log.content, date: log.date });
@@ -138,6 +147,7 @@ export default function DailyLogPage() {
   const updateLog = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+    setIsSending(true);
     if (!editingLog) return;
 
     try {
@@ -163,6 +173,8 @@ export default function DailyLogPage() {
     } catch (error) {
       console.error("Error updating log:", error);
       setErrorMessage(error.message);
+    }finally {
+      setIsSending(false);
     }
   };
 
