@@ -36,6 +36,7 @@ export default function DailyLogPage() {
   const [editingLog, setEditingLog] = useState<{
     id: string;
     content: string;
+    date: string;
   } | null>(null);
   const recognition = useRef<ExtendedSpeechRecognition | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -102,7 +103,7 @@ export default function DailyLogPage() {
     }
   };
 
-  const submitLog = async (e) => {
+  const submitLog = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setErrorMessage("");
     setIsSending(true);
@@ -123,12 +124,15 @@ export default function DailyLogPage() {
       fetchLogs(); // Refresh logs after adding
     } catch (error) {
       console.error("Error adding log:", error);
-      setErrorMessage(error.message);
-    }finally {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
+      }
+    } finally {
       setIsSending(false);
     }
   };
-
   const deleteLog = async (id: string) => {
     try {
       const response = await fetch("/api/logs", {
@@ -145,10 +149,13 @@ export default function DailyLogPage() {
       fetchLogs(); // Refresh logs after deletion
     } catch (error) {
       console.error("Error deleting log:", error);
-      setErrorMessage(error.message);
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
+      }
     }
   };
-
   const startEditLog = (log: { _id: string; content: string; date: string; timestamp?: number; }) => {
     setErrorMessage("");
     const formattedDate = new Date(log.date).toISOString().split("T")[0];
@@ -157,7 +164,7 @@ export default function DailyLogPage() {
     setInputDate(formattedDate);
   };
 
-  const updateLog = async (e) => {
+  const updateLog = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     setErrorMessage("");
     setIsSending(true);
@@ -185,12 +192,15 @@ export default function DailyLogPage() {
       fetchLogs(); // Refresh logs after update
     } catch (error) {
       console.error("Error updating log:", error);
-      setErrorMessage(error.message);
-    }finally {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage("An unknown error occurred");
+      }
+    } finally {
       setIsSending(false);
     }
   };
-
   const cancelEdit = () => {
     setErrorMessage("");
     setEditingLog(null);
@@ -204,8 +214,7 @@ export default function DailyLogPage() {
     // console.log("Starting visualizer");
 
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      audioContextRef.current = new (window.AudioContext)();
     }
     // console.log("Audio context created");
 
@@ -239,7 +248,9 @@ export default function DailyLogPage() {
         requestAnimationFrame(draw);
   
         analyser.getByteFrequencyData(dataArray);
-        canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!canvasCtx) return;
+          canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+        
   
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
@@ -274,13 +285,15 @@ export default function DailyLogPage() {
   const startListening = () => {
     if (recognition) {
       setIsListening(true);
-      recognition.current.start();
+      if (recognition.current) {
+        recognition.current.start();
+      }
       //   startVisualizer();
     }
   };
 
   const stopListening = () => {
-    if (recognition) {
+    if (recognition && recognition.current) {
       recognition.current.stop();
     }
   };
