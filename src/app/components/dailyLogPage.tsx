@@ -1,5 +1,6 @@
 "use client";
-
+import React, { useState, useEffect, useRef } from "react";
+import { Mic, Edit, Trash2, Check, X } from "lucide-react";
 interface SpeechRecognition {
   continuous: boolean;
   interimResults: boolean;
@@ -12,8 +13,11 @@ interface SpeechRecognition {
   onend: () => void;
 }
 
-import React, { useState, useEffect, useRef } from "react";
-import { Mic, Edit, Trash2, Check, X } from "lucide-react";
+interface ExtendedSpeechRecognition extends SpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+}
 
 type Log = {
   _id: string;
@@ -33,7 +37,7 @@ export default function DailyLogPage() {
     id: string;
     content: string;
   } | null>(null);
-  const recognition = useRef<unknown>(null);
+  const recognition = useRef<ExtendedSpeechRecognition | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
