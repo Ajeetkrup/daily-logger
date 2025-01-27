@@ -1,9 +1,19 @@
 "use client";
 
+interface SpeechRecognition {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: { resultIndex: number; results: SpeechRecognitionResultList }) => void;
+  onstart: () => void;
+  onerror: (event: { error: string }) => void;
+  onend: () => void;
+}
+
 import React, { useState, useEffect, useRef } from "react";
 import { Mic, Edit, Trash2, Check, X } from "lucide-react";
-
-type SpeechRecognition = typeof window.webkitSpeechRecognition;
 
 type Log = {
   _id: string;
@@ -23,7 +33,7 @@ export default function DailyLogPage() {
     id: string;
     content: string;
   } | null>(null);
-  const recognition = useRef<SpeechRecognition | null>(null);
+  const recognition = useRef<unknown>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -31,7 +41,7 @@ export default function DailyLogPage() {
 
   useEffect(() => {
     if ("webkitSpeechRecognition" in window) {
-      recognition.current = new (window as unknown as { webkitSpeechRecognition: SpeechRecognition }).webkitSpeechRecognition();
+      recognition.current = new (window as unknown as { webkitSpeechRecognition: new () => SpeechRecognition }).webkitSpeechRecognition();
       if (recognition.current) {
         recognition.current.continuous = true;
         recognition.current.interimResults = true;
@@ -66,7 +76,6 @@ export default function DailyLogPage() {
 
     fetchLogs();
   }, []);
-
   useEffect(() => {
     if (canvasRef.current) {
       startVisualizer();
