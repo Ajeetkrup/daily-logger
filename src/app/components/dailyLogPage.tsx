@@ -422,7 +422,7 @@ export default function DailyLogPage() {
             ) : (
               logs.map((log, ind) => (
                 <li
-                  key={log.id+ind}
+                  key={log._id+ind}
                   className="flex flex-col bg-white rounded-md p-3 md:p-4 shadow hover:shadow-lg transition relative"
                 >
                   <span className="text-xs md:text-sm text-neutral-500">
